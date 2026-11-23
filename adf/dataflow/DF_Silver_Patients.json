@@ -12,7 +12,15 @@
 					"name": "PacientesBronze"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Patients",
+						"type": "DatasetReference"
+					},
+					"name": "PacientesSilver"
+				}
+			],
 			"transformations": [
 				{
 					"name": "LimpiarPacientes"
@@ -36,7 +44,27 @@
 				"PacientesBronze derive(gender = case(     in(['f', 'female'], lower(trim(gender))), 'F',     in(['m', 'male'], lower(trim(gender))), 'M',     toString(null()) ),",
 				"          full_name = trim(full_name),",
 				"          patient_id = toInteger(trim(patient_id)),",
-				"          date_of_birth = case(     isNull(date_of_birth), toDate(null()),     length(trim(date_of_birth)) == 8, toDate(null()),     isDate(trim(date_of_birth), 'yyyy-MM-dd'), toDate(trim(date_of_birth), 'yyyy-MM-dd'),     isDate(trim(date_of_birth), 'MM/dd/yyyy'), toDate(trim(date_of_birth), 'MM/dd/yyyy'),     isDate(trim(date_of_birth), 'dd-MMM-yyyy'), toDate(trim(date_of_birth), 'dd-MMM-yyyy'),     isDate(trim(date_of_birth), 'MMMM dd, yyyy'), toDate(trim(date_of_birth), 'MMMM dd, yyyy'),     toDate(null()) )) ~> LimpiarPacientes"
+				"          date_of_birth = case(     isNull(date_of_birth), toDate(null()),     length(trim(date_of_birth)) == 8, toDate(null()),     isDate(trim(date_of_birth), 'yyyy-MM-dd'), toDate(trim(date_of_birth), 'yyyy-MM-dd'),     isDate(trim(date_of_birth), 'MM/dd/yyyy'), toDate(trim(date_of_birth), 'MM/dd/yyyy'),     isDate(trim(date_of_birth), 'dd-MMM-yyyy'), toDate(trim(date_of_birth), 'dd-MMM-yyyy'),     isDate(trim(date_of_birth), 'MMMM dd, yyyy'), toDate(trim(date_of_birth), 'MMMM dd, yyyy'),     toDate(null()) )) ~> LimpiarPacientes",
+				"LimpiarPacientes sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          patient_id as integer,",
+				"          full_name as string,",
+				"          gender as string,",
+				"          date_of_birth as date,",
+				"          phone as string,",
+				"          email as string,",
+				"          address as string,",
+				"          insurance_provider as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> PacientesSilver"
 			]
 		}
 	}
