@@ -13,7 +13,11 @@
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "LimpiarAdmisiones"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          admission_id as string,",
@@ -26,7 +30,39 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> AdmisionesBronze"
+				"     format: 'table') ~> AdmisionesBronze",
+				"AdmisionesBronze derive(admission_id = toInteger(trim(admission_id)),",
+				"          patient_id = toInteger(trim(patient_id)),",
+				"          attending_doctor_id = toInteger(trim(attending_doctor_id)),",
+				"          department = trim(department),",
+				"          admission_date = case(\r",
+				"    isNull(admission_date) || trim(admission_date) == '', toDate(null()),\r",
+				"    length(trim(admission_date)) == 8 &&\r",
+				"        in(['23', '24', '25', '26'], right(trim(admission_date), 2)),\r",
+				"        toDate(\r",
+				"            concat(left(trim(admission_date), 6), '20', right(trim(admission_date), 2)),\r",
+				"            'MM-dd-yyyy'\r",
+				"        ),\r",
+				"    isDate(trim(admission_date), 'yyyy-MM-dd'), toDate(trim(admission_date), 'yyyy-MM-dd'),\r",
+				"    isDate(trim(admission_date), 'MM/dd/yyyy'), toDate(trim(admission_date), 'MM/dd/yyyy'),\r",
+				"    isDate(trim(admission_date), 'dd-MMM-yyyy'), toDate(trim(admission_date), 'dd-MMM-yyyy'),\r",
+				"    isDate(trim(admission_date), 'MMMM dd, yyyy'), toDate(trim(admission_date), 'MMMM dd, yyyy'),\r",
+				"    toDate(null())\r",
+				"),",
+				"          discharge_date = case(\r",
+				"    isNull(discharge_date) || trim(discharge_date) == '', toDate(null()),\r",
+				"    length(trim(discharge_date)) == 8 &&\r",
+				"        in(['23', '24', '25', '26'], right(trim(discharge_date), 2)),\r",
+				"        toDate(\r",
+				"            concat(left(trim(discharge_date), 6), '20', right(trim(discharge_date), 2)),\r",
+				"            'MM-dd-yyyy'\r",
+				"        ),\r",
+				"    isDate(trim(discharge_date), 'yyyy-MM-dd'), toDate(trim(discharge_date), 'yyyy-MM-dd'),\r",
+				"    isDate(trim(discharge_date), 'MM/dd/yyyy'), toDate(trim(discharge_date), 'MM/dd/yyyy'),\r",
+				"    isDate(trim(discharge_date), 'dd-MMM-yyyy'), toDate(trim(discharge_date), 'dd-MMM-yyyy'),\r",
+				"    isDate(trim(discharge_date), 'MMMM dd, yyyy'), toDate(trim(discharge_date), 'MMMM dd, yyyy'),\r",
+				"    toDate(null())\r",
+				")) ~> LimpiarAdmisiones"
 			]
 		}
 	}
