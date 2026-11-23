@@ -34,7 +34,9 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> PacientesBronze",
 				"PacientesBronze derive(gender = case(     in(['f', 'female'], lower(trim(gender))), 'F',     in(['m', 'male'], lower(trim(gender))), 'M',     toString(null()) ),",
-				"          full_name = trim(full_name)) ~> LimpiarPacientes"
+				"          full_name = trim(full_name),",
+				"          patient_id = toInteger(trim(patient_id)),",
+				"          date_of_birth = case(     isNull(date_of_birth), toDate(null()),     length(trim(date_of_birth)) == 8, toDate(null()),     isDate(trim(date_of_birth), 'yyyy-MM-dd'), toDate(trim(date_of_birth), 'yyyy-MM-dd'),     isDate(trim(date_of_birth), 'MM/dd/yyyy'), toDate(trim(date_of_birth), 'MM/dd/yyyy'),     isDate(trim(date_of_birth), 'dd-MMM-yyyy'), toDate(trim(date_of_birth), 'dd-MMM-yyyy'),     isDate(trim(date_of_birth), 'MMMM dd, yyyy'), toDate(trim(date_of_birth), 'MMMM dd, yyyy'),     toDate(null()) )) ~> LimpiarPacientes"
 			]
 		}
 	}
