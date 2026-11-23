@@ -1,0 +1,14 @@
+# Archivos locales de Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+*.tfplan
+tfplan
+crash.log
+crash.*.log
+
+# Datos hospitalarios entregados para el examen
+/*.csv
+/Terraform/sql/*_insert_bronze_*.sql
