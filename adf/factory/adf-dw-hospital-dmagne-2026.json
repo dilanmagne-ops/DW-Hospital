@@ -1,0 +1,11 @@
+{
+	"name": "adf-dw-hospital-dmagne-2026",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true,
+			"isExplicitlySet": false
+		}
+	},
+	"location": "eastus"
+}
