@@ -12,7 +12,15 @@
 					"name": "FechasSilver"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Dim_Fecha",
+						"type": "DatasetReference"
+					},
+					"name": "FechaGold"
+				}
+			],
 			"transformations": [
 				{
 					"name": "AtributosFecha"
@@ -27,7 +35,43 @@
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     query: 'SELECT admission_date AS fecha_completa\\nFROM silver.admissions\\nWHERE admission_date IS NOT NULL\\nUNION\\nSELECT discharge_date AS fecha_completa\\nFROM silver.admissions\\nWHERE discharge_date IS NOT NULL\\nUNION\\nSELECT payment_date AS fecha_completa\\nFROM silver.billing\\nWHERE payment_date IS NOT NULL',",
 				"     format: 'query') ~> FechasSilver",
-				"FechasSilver derive() ~> AtributosFecha"
+				"FechasSilver derive(fecha_key = year(fecha_completa) * 10000 + month(fecha_completa) * 100 + dayOfMonth(fecha_completa),",
+				"          anio = year(fecha_completa),",
+				"          trimestre = toInteger(ceil(month(fecha_completa) / 3.0)),",
+				"          trimestre_nombre = concat('T', toString(toInteger(ceil(month(fecha_completa) / 3.0)))),",
+				"          mes = month(fecha_completa),",
+				"          mes_nombre = at(['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'], month(fecha_completa)),",
+				"          mes_corto = at(['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], month(fecha_completa)),",
+				"          semana_anio = weekOfYear(fecha_completa),",
+				"          dia_mes = dayOfMonth(fecha_completa),",
+				"          dia_semana = iif(dayOfWeek(fecha_completa) == 1, 7, dayOfWeek(fecha_completa) - 1),",
+				"          dia_nombre = at(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'], dayOfWeek(fecha_completa)),",
+				"          es_fin_de_semana = dayOfWeek(fecha_completa) == 1 || dayOfWeek(fecha_completa) == 7) ~> AtributosFecha",
+				"AtributosFecha sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          fecha_key as integer,",
+				"          fecha_completa as date,",
+				"          anio as integer,",
+				"          trimestre as integer,",
+				"          trimestre_nombre as string,",
+				"          mes as integer,",
+				"          mes_nombre as string,",
+				"          mes_corto as string,",
+				"          semana_anio as integer,",
+				"          dia_mes as integer,",
+				"          dia_semana as integer,",
+				"          dia_nombre as string,",
+				"          es_fin_de_semana as boolean",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> FechaGold"
 			]
 		}
 	}
