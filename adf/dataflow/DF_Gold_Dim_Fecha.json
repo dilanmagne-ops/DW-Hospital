@@ -1,0 +1,34 @@
+{
+	"name": "DF_Gold_Dim_Fecha",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Admissions",
+						"type": "DatasetReference"
+					},
+					"name": "FechasSilver"
+				}
+			],
+			"sinks": [],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          admission_id as integer,",
+				"          patient_id as integer,",
+				"          admission_date as date,",
+				"          discharge_date as date,",
+				"          department as string,",
+				"          attending_doctor_id as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT admission_date AS fecha_completa\\nFROM silver.admissions\\nWHERE admission_date IS NOT NULL\\nUNION\\nSELECT discharge_date AS fecha_completa\\nFROM silver.admissions\\nWHERE discharge_date IS NOT NULL\\nUNION\\nSELECT payment_date AS fecha_completa\\nFROM silver.billing\\nWHERE payment_date IS NOT NULL',",
+				"     format: 'query') ~> FechasSilver"
+			]
+		}
+	}
+}
