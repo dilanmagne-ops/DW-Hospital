@@ -1,0 +1,34 @@
+{
+	"name": "PL_Gold_Fact_Admisiones",
+	"properties": {
+		"activities": [
+			{
+				"name": "PrepararDiagnosticoSinRegistro",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "LS_DW_Hospital",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "NonQuery",
+							"text": "INSERT INTO gold.dim_diagnostico\n    (codigo_icd, descripcion_patologia, nivel_severidad)\nSELECT\n    'SIN_REGISTRO', N'Sin diagnóstico registrado', 'No informado'\nWHERE NOT EXISTS (\n    SELECT 1\n    FROM gold.dim_diagnostico\n    WHERE codigo_icd = 'SIN_REGISTRO'\n);"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
