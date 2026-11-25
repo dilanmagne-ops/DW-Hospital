@@ -1,0 +1,53 @@
+{
+	"name": "DF_Gold_Dim_Servicio_Cargo",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Billing",
+						"type": "DatasetReference"
+					},
+					"name": "CargosSilver"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Dim_Servicio_Cargo",
+						"type": "DatasetReference"
+					},
+					"name": "ServicioCargoGold"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          tipo_cargo as string,",
+				"          estado_pago as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT DISTINCT\\n    charge_type AS tipo_cargo,\\n    payment_status AS estado_pago\\nFROM silver.billing',",
+				"     format: 'query') ~> CargosSilver",
+				"CargosSilver sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          servicio_cargo_key as integer,",
+				"          tipo_cargo as string,",
+				"          estado_pago as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> ServicioCargoGold"
+			]
+		}
+	}
+}
