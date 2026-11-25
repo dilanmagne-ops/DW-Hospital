@@ -1722,6 +1722,146 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/DF_Gold_Dim_Diagnostico')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_Gold_Dim_Servicio_Cargo')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_DW_Hospital",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "servicio_cargo_key",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "tipo_cargo",
+						"type": "varchar"
+					},
+					{
+						"name": "estado_pago",
+						"type": "varchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "gold",
+					"table": "dim_servicio_cargo"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_DW_Hospital')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DF_Gold_Dim_Servicio_Cargo')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_Silver_Billing",
+								"type": "DatasetReference"
+							},
+							"name": "CargosSilver"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_Gold_Dim_Servicio_Cargo",
+								"type": "DatasetReference"
+							},
+							"name": "ServicioCargoGold"
+						}
+					],
+					"transformations": [],
+					"scriptLines": [
+						"source(output(",
+						"          tipo_cargo as string,",
+						"          estado_pago as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT DISTINCT\\n    charge_type AS tipo_cargo,\\n    payment_status AS estado_pago\\nFROM silver.billing',",
+						"     format: 'query') ~> CargosSilver",
+						"CargosSilver sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          servicio_cargo_key as integer,",
+						"          tipo_cargo as string,",
+						"          estado_pago as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> ServicioCargoGold"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_Silver_Billing')]",
+				"[concat(variables('factoryId'), '/datasets/DS_Gold_Dim_Servicio_Cargo')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Gold_Servicio_Cargo')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CargarDimServicioCargo",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Gold_Dim_Servicio_Cargo",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CargosSilver": {},
+									"ServicioCargoGold": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_Gold_Dim_Servicio_Cargo')]"
+			]
 		}
 	]
 }
