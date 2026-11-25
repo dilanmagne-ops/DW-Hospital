@@ -16,19 +16,20 @@
 			"transformations": [],
 			"scriptLines": [
 				"source(output(",
-				"          patient_id as integer,",
-				"          full_name as string,",
-				"          gender as string,",
-				"          date_of_birth as date,",
-				"          phone as string,",
-				"          email as string,",
-				"          address as string,",
-				"          insurance_provider as string",
+				"          patient_id_bk as integer,",
+				"          nombre_completo as string,",
+				"          genero as string,",
+				"          fecha_nacimiento as date,",
+				"          rango_etario as string,",
+				"          correo_electronico as string,",
+				"          direccion as string,",
+				"          proveedor_seguro as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> PacientesSilver"
+				"     query: 'SELECT\\n    p.patient_id AS patient_id_bk,\\n    p.full_name AS nombre_completo,\\n    CASE UPPER(TRIM(p.gender))\\n        WHEN \\'F\\' THEN \\'Femenino\\'\\n        WHEN \\'M\\' THEN \\'Masculino\\'\\n        ELSE \\'Otro\\'\\n    END AS genero,\\n    p.date_of_birth AS fecha_nacimiento,\\n    CASE\\n        WHEN p.date_of_birth IS NULL OR p.date_of_birth > corte.hoy THEN NULL\\n        WHEN edad.anios <= 18 THEN \\'0-18\\'\\n        WHEN edad.anios <= 35 THEN \\'19-35\\'\\n        WHEN edad.anios <= 60 THEN \\'36-60\\'\\n        ELSE \\'60+\\'\\n    END AS rango_etario,\\n    p.email AS correo_electronico,\\n    p.address AS direccion,\\n    p.insurance_provider AS proveedor_seguro\\nFROM silver.patients AS p\\nCROSS APPLY (VALUES (CAST(SYSUTCDATETIME() AS date))) AS corte(hoy)\\nCROSS APPLY (VALUES (DATEDIFF(year, p.date_of_birth, corte.hoy))) AS dif(anios)\\nCROSS APPLY (VALUES (\\n    dif.anios - CASE\\n        WHEN DATEADD(year, dif.anios, p.date_of_birth) > corte.hoy THEN 1\\n        ELSE 0\\n    END\\n)) AS edad(anios)',",
+				"     format: 'query') ~> PacientesSilver"
 			]
 		}
 	}
