@@ -963,6 +963,8 @@
 						"          amount = toDecimal(trim(replace(replace(replace(amount, 'USD', ''), '$', ''), ',', '')), 12, 2),",
 						"          payment_status = lower(trim(payment_status)),",
 						"          payment_date = case(\r",
+						"    length(trim(payment_date)) == 8 && isDate(trim(payment_date), 'MM-dd-yy'),\r",
+						"        toDate(concat('20', right(trim(payment_date), 2), '-', left(trim(payment_date), 2), '-', substring(trim(payment_date), 4, 2)), 'yyyy-MM-dd'),\r",
 						"    isDate(trim(payment_date), 'yyyy-MM-dd'), toDate(trim(payment_date), 'yyyy-MM-dd'),\r",
 						"    isDate(trim(payment_date), 'MM/dd/yyyy'), toDate(trim(payment_date), 'MM/dd/yyyy'),\r",
 						"    isDate(trim(payment_date), 'dd-MMM-yyyy'), toDate(trim(payment_date), 'dd-MMM-yyyy'),\r",
