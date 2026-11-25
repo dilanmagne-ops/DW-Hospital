@@ -1,0 +1,38 @@
+{
+	"name": "DF_Silver_Diagnoses",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_Bronze_Diagnoses",
+						"type": "DatasetReference"
+					},
+					"name": "DiagnosticosBronze"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "LimpiarDiagnosticos"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          diagnosis_id as string,",
+				"          admission_id as string,",
+				"          icd_code as string,",
+				"          diagnosis_description as string,",
+				"          severity as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DiagnosticosBronze",
+				"DiagnosticosBronze derive(diagnosis_id = toInteger(trim(diagnosis_id)),",
+				"          admission_id = toInteger(trim(admission_id))) ~> LimpiarDiagnosticos"
+			]
+		}
+	}
+}
