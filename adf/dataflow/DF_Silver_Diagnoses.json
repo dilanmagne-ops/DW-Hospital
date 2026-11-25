@@ -10,12 +10,30 @@
 						"type": "DatasetReference"
 					},
 					"name": "DiagnosticosBronze"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Admissions",
+						"type": "DatasetReference"
+					},
+					"name": "AdmisionesReferencia"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Diagnoses",
+						"type": "DatasetReference"
+					},
+					"name": "DiagnosticosSilver"
+				}
+			],
 			"transformations": [
 				{
 					"name": "LimpiarDiagnosticos"
+				},
+				{
+					"name": "DiagnosticosConAdmision"
 				}
 			],
 			"scriptLines": [
@@ -30,8 +48,43 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> DiagnosticosBronze",
+				"source(output(",
+				"          admission_id as integer,",
+				"          patient_id as integer,",
+				"          admission_date as date,",
+				"          discharge_date as date,",
+				"          department as string,",
+				"          attending_doctor_id as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> AdmisionesReferencia",
 				"DiagnosticosBronze derive(diagnosis_id = toInteger(trim(diagnosis_id)),",
-				"          admission_id = toInteger(trim(admission_id))) ~> LimpiarDiagnosticos"
+				"          admission_id = toInteger(trim(admission_id)),",
+				"          icd_code = upper(trim(icd_code)),",
+				"          diagnosis_description = trim(diagnosis_description),",
+				"          severity = iif(isNull(severity) || trim(severity) == '', toString(null()), upper(trim(severity)))) ~> LimpiarDiagnosticos",
+				"LimpiarDiagnosticos, AdmisionesReferencia exists(LimpiarDiagnosticos@admission_id == AdmisionesReferencia@admission_id,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> DiagnosticosConAdmision",
+				"DiagnosticosConAdmision sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          diagnosis_id as integer,",
+				"          admission_id as integer,",
+				"          icd_code as string,",
+				"          diagnosis_description as string,",
+				"          severity as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> DiagnosticosSilver"
 			]
 		}
 	}
