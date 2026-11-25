@@ -13,7 +13,11 @@
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "LimpiarFacturacion"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          billing_id as string,",
@@ -26,7 +30,19 @@
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> FacturacionBronze"
+				"     format: 'table') ~> FacturacionBronze",
+				"FacturacionBronze derive(billing_id = toInteger(trim(billing_id)),",
+				"          admission_id = toInteger(trim(admission_id)),",
+				"          charge_type = trim(charge_type),",
+				"          amount = toDecimal(trim(replace(replace(replace(amount, 'USD', ''), '$', ''), ',', '')), 12, 2),",
+				"          payment_status = lower(trim(payment_status)),",
+				"          payment_date = case(\r",
+				"    isDate(trim(payment_date), 'yyyy-MM-dd'), toDate(trim(payment_date), 'yyyy-MM-dd'),\r",
+				"    isDate(trim(payment_date), 'MM/dd/yyyy'), toDate(trim(payment_date), 'MM/dd/yyyy'),\r",
+				"    isDate(trim(payment_date), 'dd-MMM-yyyy'), toDate(trim(payment_date), 'dd-MMM-yyyy'),\r",
+				"    isDate(trim(payment_date), 'MMMM dd, yyyy'), toDate(trim(payment_date), 'MMMM dd, yyyy'),\r",
+				"    toDate(null())\r",
+				")) ~> LimpiarFacturacion"
 			]
 		}
 	}
