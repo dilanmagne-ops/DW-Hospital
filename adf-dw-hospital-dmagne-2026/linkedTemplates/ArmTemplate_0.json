@@ -437,6 +437,87 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DS_Gold_Dim_Fecha')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_DW_Hospital",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "fecha_key",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "fecha_completa",
+						"type": "date"
+					},
+					{
+						"name": "anio",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "trimestre",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "trimestre_nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "mes",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "mes_nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "mes_corto",
+						"type": "char"
+					},
+					{
+						"name": "semana_anio",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "dia_mes",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "dia_semana",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "dia_nombre",
+						"type": "varchar"
+					},
+					{
+						"name": "es_fin_de_semana",
+						"type": "bit"
+					}
+				],
+				"typeProperties": {
+					"schema": "gold",
+					"table": "dim_fecha"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_DW_Hospital')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DF_Silver_Admissions')]",
 			"type": "Microsoft.DataFactory/factories/dataflows",
 			"apiVersion": "2018-06-01",
@@ -869,6 +950,90 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DF_Gold_Dim_Fecha')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "DS_Silver_Admissions",
+								"type": "DatasetReference"
+							},
+							"name": "FechasSilver"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "DS_Gold_Dim_Fecha",
+								"type": "DatasetReference"
+							},
+							"name": "FechaGold"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AtributosFecha"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          fecha_completa as date",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     query: 'SELECT admission_date AS fecha_completa\\nFROM silver.admissions\\nWHERE admission_date IS NOT NULL\\nUNION\\nSELECT discharge_date AS fecha_completa\\nFROM silver.admissions\\nWHERE discharge_date IS NOT NULL\\nUNION\\nSELECT payment_date AS fecha_completa\\nFROM silver.billing\\nWHERE payment_date IS NOT NULL',",
+						"     format: 'query') ~> FechasSilver",
+						"FechasSilver derive(fecha_key = year(fecha_completa) * 10000 + month(fecha_completa) * 100 + dayOfMonth(fecha_completa),",
+						"          anio = year(fecha_completa),",
+						"          trimestre = toInteger(ceil(month(fecha_completa) / 3.0)),",
+						"          trimestre_nombre = concat('T', toString(toInteger(ceil(month(fecha_completa) / 3.0)))),",
+						"          mes = month(fecha_completa),",
+						"          mes_nombre = at(['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'], month(fecha_completa)),",
+						"          mes_corto = at(['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'], month(fecha_completa)),",
+						"          semana_anio = weekOfYear(fecha_completa),",
+						"          dia_mes = dayOfMonth(fecha_completa),",
+						"          dia_semana = iif(dayOfWeek(fecha_completa) == 1, 7, dayOfWeek(fecha_completa) - 1),",
+						"          dia_nombre = at(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'], dayOfWeek(fecha_completa)),",
+						"          es_fin_de_semana = dayOfWeek(fecha_completa) == 1 || dayOfWeek(fecha_completa) == 7) ~> AtributosFecha",
+						"AtributosFecha sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          fecha_key as integer,",
+						"          fecha_completa as date,",
+						"          anio as integer,",
+						"          trimestre as integer,",
+						"          trimestre_nombre as string,",
+						"          mes as integer,",
+						"          mes_nombre as string,",
+						"          mes_corto as string,",
+						"          semana_anio as integer,",
+						"          dia_mes as integer,",
+						"          dia_semana as integer,",
+						"          dia_nombre as string,",
+						"          es_fin_de_semana as boolean",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> FechaGold"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/DS_Silver_Admissions')]",
+				"[concat(variables('factoryId'), '/datasets/DS_Gold_Dim_Fecha')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/PL_Silver_Admissions')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -1053,6 +1218,52 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/dataflows/DF_Silver_Billing')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/PL_Gold_Dimensiones')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CargarDimFecha",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "DF_Gold_Dim_Fecha",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"FechasSilver": {},
+									"FechaGold": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/DF_Gold_Dim_Fecha')]"
 			]
 		}
 	]
