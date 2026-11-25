@@ -1,0 +1,91 @@
+{
+	"name": "DF_Gold_Fact_Admisiones",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Admissions",
+						"type": "DatasetReference"
+					},
+					"name": "AdmisionesSilver"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Dim_Paciente",
+						"type": "DatasetReference"
+					},
+					"name": "PacientesGold"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Dim_Departamento",
+						"type": "DatasetReference"
+					},
+					"name": "DepartamentosGold"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "BuscarPaciente"
+				},
+				{
+					"name": "BuscarDepartamento"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          admission_id_bk as integer,",
+				"          patient_id as integer,",
+				"          nombre_departamento as string,",
+				"          fecha_ingreso as date,",
+				"          fecha_alta as date,",
+				"          medico_id as integer,",
+				"          dias_estancia as integer,",
+				"          conteo_admisiones as integer,",
+				"          codigo_icd as string,",
+				"          descripcion_patologia as string,",
+				"          nivel_severidad as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    a.admission_id AS admission_id_bk,\\n    a.patient_id,\\n    TRIM(a.department) AS nombre_departamento,\\n    a.admission_date AS fecha_ingreso,\\n    a.discharge_date AS fecha_alta,\\n    a.attending_doctor_id AS medico_id,\\n    DATEDIFF(day, a.admission_date, a.discharge_date) AS dias_estancia,\\n    1 AS conteo_admisiones,\\n    CASE WHEN d.diagnosis_id IS NULL THEN \\'SIN_REGISTRO\\'\\n         ELSE TRIM(d.icd_code) END AS codigo_icd,\\n    CASE WHEN d.diagnosis_id IS NULL THEN N\\'Sin diagnóstico registrado\\'\\n         ELSE NULLIF(TRIM(d.diagnosis_description), \\'\\') END AS descripcion_patologia,\\n    COALESCE(NULLIF(TRIM(d.severity), \\'\\'), \\'No informado\\') AS nivel_severidad\\nFROM silver.admissions AS a\\nOUTER APPLY (\\n    SELECT TOP (1)\\n        dx.diagnosis_id,\\n        dx.icd_code,\\n        dx.diagnosis_description,\\n        dx.severity\\n    FROM silver.diagnoses AS dx\\n    WHERE dx.admission_id = a.admission_id\\n    ORDER BY dx.diagnosis_id\\n) AS d',",
+				"     format: 'query') ~> AdmisionesSilver",
+				"source(output(",
+				"          paciente_key as integer,",
+				"          patient_id_bk as integer,",
+				"          nombre_completo as string,",
+				"          genero as string,",
+				"          fecha_nacimiento as date,",
+				"          rango_etario as string,",
+				"          correo_electronico as string,",
+				"          direccion as string,",
+				"          proveedor_seguro as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> PacientesGold",
+				"source(output(",
+				"          departamento_key as integer,",
+				"          nombre_departamento as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> DepartamentosGold",
+				"AdmisionesSilver, PacientesGold lookup(patient_id == patient_id_bk,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> BuscarPaciente",
+				"BuscarPaciente, DepartamentosGold lookup(AdmisionesSilver@nombre_departamento == DepartamentosGold@nombre_departamento,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> BuscarDepartamento"
+			]
+		}
+	}
+}
