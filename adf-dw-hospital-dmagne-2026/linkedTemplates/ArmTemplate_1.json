@@ -183,7 +183,7 @@
 						"     multiple: false,",
 						"     pickup: 'any',",
 						"     broadcast: 'auto')~> BuscarPaciente",
-						"BuscarPaciente, DepartamentosGold lookup(AdmisionesSilver@nombre_departamento == DepartamentosGold@nombre_departamento,",
+						"BuscarPaciente, DepartamentosGold lookup(upper(trim(AdmisionesSilver@nombre_departamento)) == upper(trim(DepartamentosGold@nombre_departamento)),",
 						"     multiple: false,",
 						"     pickup: 'any',",
 						"     broadcast: 'auto')~> BuscarDepartamento",
