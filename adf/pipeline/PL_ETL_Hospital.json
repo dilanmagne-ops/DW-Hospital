@@ -1,0 +1,93 @@
+{
+	"name": "PL_ETL_Hospital",
+	"properties": {
+		"activities": [
+			{
+				"name": "EjecutarSilverPacientes",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Silver_Hospital",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarSilverAdmisiones",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverPacientes",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Silver_Admissions",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarSilverDiagnosticos",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverAdmisiones",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Silver_Diagnoses",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarSilverFacturacion",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverAdmisiones",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Silver_Billing",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"annotations": []
+	}
+}
