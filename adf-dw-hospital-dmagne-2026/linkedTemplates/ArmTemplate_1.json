@@ -226,7 +226,7 @@
 						"     mapColumn(",
 						"          admission_id_bk,",
 						"          paciente_key,",
-						"          paciente_key = departamento_key,",
+						"          departamento_key,",
 						"          diagnostico_key,",
 						"          fecha_ingreso_key = FechaIngresoGold@fecha_key,",
 						"          fecha_alta_key = FechaAltaGold@fecha_key,",
