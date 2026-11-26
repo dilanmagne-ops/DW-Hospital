@@ -24,6 +24,13 @@
 						"type": "DatasetReference"
 					},
 					"name": "ServiciosGold"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Dim_Fecha",
+						"type": "DatasetReference"
+					},
+					"name": "FechasPagoGold"
 				}
 			],
 			"sinks": [],
@@ -33,6 +40,9 @@
 				},
 				{
 					"name": "BuscarServicioCargo"
+				},
+				{
+					"name": "BuscarFechaPago"
 				}
 			],
 			"scriptLines": [
@@ -75,6 +85,25 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> ServiciosGold",
+				"source(output(",
+				"          fecha_key as integer,",
+				"          fecha_completa as date,",
+				"          anio as integer,",
+				"          trimestre as integer,",
+				"          trimestre_nombre as string,",
+				"          mes as integer,",
+				"          mes_nombre as string,",
+				"          mes_corto as string,",
+				"          semana_anio as integer,",
+				"          dia_mes as integer,",
+				"          dia_semana as integer,",
+				"          dia_nombre as string,",
+				"          es_fin_de_semana as boolean",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> FechasPagoGold",
 				"FacturacionSilver, AdmisionesGold lookup(FacturacionSilver@admission_id_bk == AdmisionesGold@admission_id_bk,",
 				"     multiple: false,",
 				"     pickup: 'any',",
@@ -83,7 +112,11 @@
 				"     && FacturacionSilver@estado_pago == ServiciosGold@estado_pago,",
 				"     multiple: false,",
 				"     pickup: 'any',",
-				"     broadcast: 'auto')~> BuscarServicioCargo"
+				"     broadcast: 'auto')~> BuscarServicioCargo",
+				"BuscarServicioCargo, FechasPagoGold lookup(fecha_pago == fecha_completa,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> BuscarFechaPago"
 			]
 		}
 	}
