@@ -86,6 +86,197 @@
 					},
 					"waitOnCompletion": true
 				}
+			},
+			{
+				"name": "EjecutarGoldFecha",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverAdmisiones",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "EjecutarSilverFacturacion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Dimensiones",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarGoldPaciente",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverPacientes",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Paciente",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarGoldDepartamento",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverAdmisiones",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Departamento",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarGoldDiagnostico",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverDiagnosticos",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Diagnostico",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarGoldServicioCargo",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarSilverFacturacion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Servicio_Cargo",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarGoldFactAdmisiones",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarGoldFecha",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "EjecutarGoldPaciente",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "EjecutarGoldDepartamento",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "EjecutarGoldDiagnostico",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Fact_Admisiones",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "EjecutarGoldFactFacturacion",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "EjecutarGoldFactAdmisiones",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "EjecutarGoldServicioCargo",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "PL_Gold_Fact_Facturacion",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
 			}
 		],
 		"annotations": []
