@@ -173,7 +173,7 @@
 				"     broadcast: 'auto')~> BuscarDepartamento",
 				"BuscarDepartamento, DiagnosticosGold lookup(AdmisionesSilver@codigo_icd == DiagnosticosGold@codigo_icd",
 				"     && AdmisionesSilver@nivel_severidad == DiagnosticosGold@nivel_severidad",
-				"     && AdmisionesSilver@descripcion_patologia == DiagnosticosGold@descripcion_patologia,",
+				"     && coalesce(AdmisionesSilver@descripcion_patologia, '') == coalesce(DiagnosticosGold@descripcion_patologia, ''),",
 				"     multiple: false,",
 				"     pickup: 'any',",
 				"     broadcast: 'auto')~> BuscarDiagnostico",
@@ -206,7 +206,21 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> AdmisionesGold"
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          each(match(/* All input columns */ true()),",
+				"               /* Input name */ $$ = $$),",
+				"          admission_id_bk,",
+				"          paciente_key,",
+				"          paciente_key = departamento_key,",
+				"          departamento_key = admission_id_bk,",
+				"          diagnostico_key,",
+				"          fecha_ingreso_key = FechaIngresoGold@fecha_key,",
+				"          fecha_alta_key = FechaAltaGold@fecha_key,",
+				"          medico_id,",
+				"          dias_estancia,",
+				"          conteo_admisiones",
+				"     )) ~> AdmisionesGold"
 			]
 		}
 	}
