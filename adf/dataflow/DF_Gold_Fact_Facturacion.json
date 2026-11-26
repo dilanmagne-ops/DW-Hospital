@@ -1,0 +1,90 @@
+{
+	"name": "DF_Gold_Fact_Facturacion",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DS_Silver_Billing",
+						"type": "DatasetReference"
+					},
+					"name": "FacturacionSilver"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Fact_Admisiones",
+						"type": "DatasetReference"
+					},
+					"name": "AdmisionesGold"
+				},
+				{
+					"dataset": {
+						"referenceName": "DS_Gold_Dim_Servicio_Cargo",
+						"type": "DatasetReference"
+					},
+					"name": "ServiciosGold"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "BuscarAdmision"
+				},
+				{
+					"name": "BuscarServicioCargo"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          billing_id_bk as integer,",
+				"          admission_id_bk as integer,",
+				"          tipo_cargo as string,",
+				"          estado_pago as string,",
+				"          fecha_pago as date,",
+				"          monto_facturado as decimal(12,2),",
+				"          conteo_transacciones as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    billing_id AS billing_id_bk,\\n    admission_id AS admission_id_bk,\\n    charge_type AS tipo_cargo,\\n    payment_status AS estado_pago,\\n    payment_date AS fecha_pago,\\n    amount AS monto_facturado,\\n    1 AS conteo_transacciones\\nFROM silver.billing',",
+				"     format: 'query') ~> FacturacionSilver",
+				"source(output(",
+				"          admision_key as long,",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          diagnostico_key as integer,",
+				"          fecha_ingreso_key as integer,",
+				"          fecha_alta_key as integer,",
+				"          medico_id as integer,",
+				"          dias_estancia as integer,",
+				"          conteo_admisiones as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> AdmisionesGold",
+				"source(output(",
+				"          servicio_cargo_key as integer,",
+				"          tipo_cargo as string,",
+				"          estado_pago as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> ServiciosGold",
+				"FacturacionSilver, AdmisionesGold lookup(FacturacionSilver@admission_id_bk == AdmisionesGold@admission_id_bk,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> BuscarAdmision",
+				"BuscarAdmision, ServiciosGold lookup(FacturacionSilver@tipo_cargo == ServiciosGold@tipo_cargo",
+				"     && FacturacionSilver@estado_pago == ServiciosGold@estado_pago,",
+				"     multiple: false,",
+				"     pickup: 'any',",
+				"     broadcast: 'auto')~> BuscarServicioCargo"
+			]
+		}
+	}
+}
